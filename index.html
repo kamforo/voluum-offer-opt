@@ -1,0 +1,2153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Offer Optimization</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #e4e4e4;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 30px 0;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: #888;
+            font-size: 1.1rem;
+        }
+
+        /* Progress Steps */
+        .progress-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 40px;
+        }
+
+        .progress-steps {
+            display: flex;
+            align-items: center;
+            gap: 0;
+        }
+
+        .step {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px 24px;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            opacity: 0.5;
+            transition: all 0.3s;
+        }
+
+        .step.active {
+            opacity: 1;
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid rgba(0, 212, 255, 0.3);
+        }
+
+        .step.completed {
+            opacity: 1;
+            background: rgba(46, 204, 113, 0.1);
+            border: 1px solid rgba(46, 204, 113, 0.3);
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        .step.active .step-number {
+            background: #00d4ff;
+            color: #1a1a2e;
+        }
+
+        .step.completed .step-number {
+            background: #2ecc71;
+            color: #1a1a2e;
+        }
+
+        .step-connector {
+            width: 40px;
+            height: 2px;
+            background: rgba(255,255,255,0.1);
+        }
+
+        /* Cards */
+        .card {
+            background: rgba(255,255,255,0.05);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 20px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .card h2 {
+            margin-bottom: 20px;
+            font-size: 1.4rem;
+            color: #fff;
+        }
+
+        .card h3 {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+            color: #00d4ff;
+        }
+
+        /* Step Content */
+        .step-content {
+            display: none;
+        }
+
+        .step-content.active {
+            display: block;
+        }
+
+        /* File Upload */
+        .upload-zone {
+            border: 2px dashed rgba(0, 212, 255, 0.3);
+            border-radius: 12px;
+            padding: 60px 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 212, 255, 0.02);
+        }
+
+        .upload-zone:hover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.05);
+        }
+
+        .upload-zone.dragover {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 15px;
+        }
+
+        .upload-zone p {
+            color: #888;
+            margin-bottom: 10px;
+        }
+
+        .upload-zone input[type="file"] {
+            display: none;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 12px 28px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 500;
+        }
+
+        .btn-primary {
+            background: linear-gradient(90deg, #00d4ff, #7b2cbf);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(0, 212, 255, 0.3);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(255,255,255,0.1);
+            color: #e4e4e4;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        /* Form Elements */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #ccc;
+        }
+
+        select, input[type="text"], input[type="number"] {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            background: rgba(0,0,0,0.3);
+            color: #e4e4e4;
+            font-size: 1rem;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #00d4ff;
+        }
+
+        /* Data Preview */
+        .data-preview {
+            background: rgba(0,0,0,0.3);
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            overflow-x: auto;
+        }
+
+        .preview-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .preview-stat {
+            background: rgba(255,255,255,0.05);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #00d4ff;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #888;
+            margin-top: 5px;
+        }
+
+        /* Column Mapping */
+        .column-mapping {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        /* Risk Level Selector */
+        .risk-selector {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .risk-option {
+            padding: 20px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: center;
+        }
+
+        .risk-option:hover {
+            border-color: rgba(255,255,255,0.3);
+        }
+
+        .risk-option.selected {
+            border-color: #00d4ff;
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .risk-option.conservative {
+            --risk-color: #2ecc71;
+        }
+
+        .risk-option.balanced {
+            --risk-color: #f39c12;
+        }
+
+        .risk-option.aggressive {
+            --risk-color: #e74c3c;
+        }
+
+        .risk-option.selected.conservative {
+            border-color: #2ecc71;
+            background: rgba(46, 204, 113, 0.1);
+        }
+
+        .risk-option.selected.balanced {
+            border-color: #f39c12;
+            background: rgba(243, 156, 18, 0.1);
+        }
+
+        .risk-option.selected.aggressive {
+            border-color: #e74c3c;
+            background: rgba(231, 76, 60, 0.1);
+        }
+
+        .risk-icon {
+            font-size: 2rem;
+            margin-bottom: 10px;
+        }
+
+        .risk-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+
+        .risk-desc {
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        .risk-max {
+            font-size: 0.8rem;
+            color: var(--risk-color);
+            margin-top: 10px;
+        }
+
+        /* Path List */
+        .path-list {
+            max-height: 300px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+        }
+
+        .path-item {
+            padding: 15px 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .path-item:hover {
+            background: rgba(255,255,255,0.05);
+        }
+
+        .path-item.selected {
+            background: rgba(0, 212, 255, 0.1);
+            border-left: 3px solid #00d4ff;
+        }
+
+        .path-item:last-child {
+            border-bottom: none;
+        }
+
+        .path-name {
+            font-weight: 500;
+        }
+
+        .path-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 0.85rem;
+            color: #888;
+        }
+
+        /* Results */
+        .results-header {
+            background: linear-gradient(90deg, rgba(0, 212, 255, 0.1), rgba(123, 44, 191, 0.1));
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            text-align: center;
+        }
+
+        .results-header h2 {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+
+        .results-header .path-id {
+            color: #00d4ff;
+            font-size: 1.1rem;
+        }
+
+        /* Results Table */
+        .results-table-container {
+            overflow-x: auto;
+            margin-bottom: 25px;
+        }
+
+        .results-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.95rem;
+        }
+
+        .results-table th {
+            background: rgba(0,0,0,0.4);
+            padding: 14px 12px;
+            text-align: left;
+            font-weight: 600;
+            color: #00d4ff;
+            white-space: nowrap;
+            border-bottom: 2px solid rgba(0, 212, 255, 0.3);
+            cursor: pointer;
+            user-select: none;
+            transition: background 0.2s;
+        }
+
+        .results-table th:hover {
+            background: rgba(0, 212, 255, 0.1);
+        }
+
+        .results-table th .sort-icon {
+            margin-left: 5px;
+            opacity: 0.5;
+        }
+
+        .results-table th.sorted .sort-icon {
+            opacity: 1;
+        }
+
+        .results-table th.sorted-asc .sort-icon::after { content: '▲'; }
+        .results-table th.sorted-desc .sort-icon::after { content: '▼'; }
+
+        .period-stats {
+            font-size: 0.75rem;
+            color: #888;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .paused-badge {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            margin-left: 8px;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 600;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        .status-winner {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .status-cut {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .status-paused {
+            background: rgba(136, 136, 136, 0.2);
+            color: #888;
+        }
+
+        .status-exploring {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db;
+        }
+
+        .status-testing {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        .results-table td {
+            padding: 14px 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .results-table tr:hover {
+            background: rgba(255,255,255,0.03);
+        }
+
+        .results-table tr.path-row {
+            cursor: pointer;
+        }
+
+        .results-table tr.path-row.selected {
+            background: rgba(0, 212, 255, 0.15);
+            border-left: 3px solid #00d4ff;
+        }
+
+        .results-table tr.path-row:hover {
+            background: rgba(0, 212, 255, 0.08);
+        }
+
+        .results-table tr.path-row.selected:hover {
+            background: rgba(0, 212, 255, 0.2);
+        }
+
+        .results-table .number {
+            text-align: right;
+            font-family: 'SF Mono', Monaco, monospace;
+        }
+
+        .results-table .weight-change {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .weight-arrow {
+            font-size: 1.2rem;
+        }
+
+        .weight-arrow.up { color: #2ecc71; }
+        .weight-arrow.down { color: #e74c3c; }
+        .weight-arrow.same { color: #888; }
+
+        .stability-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .stability-high {
+            background: rgba(46, 204, 113, 0.2);
+            color: #2ecc71;
+        }
+
+        .stability-medium {
+            background: rgba(243, 156, 18, 0.2);
+            color: #f39c12;
+        }
+
+        .stability-low {
+            background: rgba(231, 76, 60, 0.2);
+            color: #e74c3c;
+        }
+
+        .trend-indicator {
+            font-size: 1.1rem;
+        }
+
+        .warning-flag {
+            color: #f39c12;
+            font-size: 0.85rem;
+            display: block;
+            margin-top: 4px;
+        }
+
+        /* Summary Cards */
+        .summary-cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .summary-card {
+            background: rgba(0,0,0,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+        }
+
+        .summary-card .value {
+            font-size: 2rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .summary-card .label {
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        .summary-card.positive .value {
+            color: #2ecc71;
+        }
+
+        .summary-card.neutral .value {
+            color: #00d4ff;
+        }
+
+        /* Charts */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .chart-container {
+            background: rgba(0,0,0,0.2);
+            border-radius: 12px;
+            padding: 20px;
+        }
+
+        .chart-container h3 {
+            margin-bottom: 15px;
+            font-size: 1rem;
+            color: #ccc;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.8);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .loading-overlay.hidden {
+            display: none;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-top-color: #00d4ff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            margin-top: 20px;
+            color: #ccc;
+        }
+
+        .progress-text {
+            margin-top: 10px;
+            color: #888;
+            font-size: 0.9rem;
+        }
+
+        /* Error */
+        .error-message {
+            background: rgba(231, 76, 60, 0.1);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            color: #e74c3c;
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .error-message.hidden {
+            display: none;
+        }
+
+        /* Recommendations */
+        .recommendations {
+            background: rgba(0, 212, 255, 0.05);
+            border: 1px solid rgba(0, 212, 255, 0.2);
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 25px;
+        }
+
+        .recommendations h3 {
+            color: #00d4ff;
+            margin-bottom: 15px;
+        }
+
+        .recommendations ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .recommendations li {
+            padding: 8px 0;
+            padding-left: 25px;
+            position: relative;
+            color: #ccc;
+        }
+
+        .recommendations li::before {
+            content: '→';
+            position: absolute;
+            left: 0;
+            color: #00d4ff;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .progress-steps {
+                flex-direction: column;
+                gap: 10px;
+            }
+
+            .step-connector {
+                width: 2px;
+                height: 20px;
+            }
+
+            .risk-selector {
+                grid-template-columns: 1fr;
+            }
+
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .path-stats {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Offer Optimization</h1>
+            <p>Maximize EPV with risk-adjusted offer weights</p>
+        </header>
+
+        <!-- Progress Steps -->
+        <div class="progress-container">
+            <div class="progress-steps">
+                <div class="step active" data-step="1">
+                    <div class="step-number">1</div>
+                    <span>Upload Data</span>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step" data-step="2">
+                    <div class="step-number">2</div>
+                    <span>Configure</span>
+                </div>
+                <div class="step-connector"></div>
+                <div class="step" data-step="3">
+                    <div class="step-number">3</div>
+                    <span>Results</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Error Message -->
+        <div class="error-message hidden" id="errorMessage"></div>
+
+        <!-- Step 1: Upload Data -->
+        <div class="step-content active" id="step1">
+            <div class="card">
+                <h2>Upload Conversion Data</h2>
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">📁</div>
+                    <p>Drag & drop your CSV file here</p>
+                    <p>or click to browse</p>
+                    <input type="file" id="fileInput" accept=".csv">
+                </div>
+
+                <div class="data-preview hidden" id="dataPreview">
+                    <h3>Data Preview</h3>
+                    <div class="preview-stats" id="previewStats"></div>
+
+                    <h3>Column Mapping</h3>
+                    <p style="color: #888; margin-bottom: 15px;">Map your CSV columns to the required fields:</p>
+                    <div class="column-mapping" id="columnMapping"></div>
+
+                    <div class="btn-group">
+                        <button class="btn btn-primary" id="proceedToStep2" disabled>Continue to Configuration</button>
+                        <button class="btn btn-secondary" id="resetUpload">Upload Different File</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 2: Configure Analysis -->
+        <div class="step-content" id="step2">
+            <div class="card">
+                <h2>Select Path</h2>
+                <p style="color: #888; margin-bottom: 15px;">Choose a path to optimize:</p>
+                <div style="margin-bottom: 15px;">
+                    <input type="text" id="pathSearch" placeholder="Search paths..." style="max-width: 300px;">
+                </div>
+                <div class="results-table-container" style="max-height: 450px; overflow-y: auto;">
+                    <table class="results-table" id="pathPreviewTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="name" data-pathsort="true">Path<span class="sort-icon"></span></th>
+                                <th data-sort="revenue" data-pathsort="true" class="sorted sorted-desc">Revenue<span class="sort-icon"></span></th>
+                                <th data-sort="conversions" data-pathsort="true">Conversions<span class="sort-icon"></span></th>
+                                <th data-sort="visits" data-pathsort="true">Visits<span class="sort-icon"></span></th>
+                                <th data-sort="epv" data-pathsort="true">EPV<span class="sort-icon"></span></th>
+                                <th data-sort="offers" data-pathsort="true">Offers<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="pathPreviewBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="card">
+                <h2>Optimization Mode</h2>
+                <p style="color: #888;">How aggressively should we optimize for maximum EPV?</p>
+                <div class="risk-selector" id="riskSelector">
+                    <div class="risk-option conservative" data-risk="conservative">
+                        <div class="risk-icon">🔬</div>
+                        <div class="risk-title">Exploration</div>
+                        <div class="risk-desc">Keep testing underperformers longer, slower to cut</div>
+                        <div class="risk-max">Needs 95% confidence to cut</div>
+                    </div>
+                    <div class="risk-option balanced selected" data-risk="balanced">
+                        <div class="risk-icon">⚡</div>
+                        <div class="risk-title">Optimize</div>
+                        <div class="risk-desc">Balance learning with exploitation</div>
+                        <div class="risk-max">Needs 90% confidence to cut</div>
+                    </div>
+                    <div class="risk-option aggressive" data-risk="aggressive">
+                        <div class="risk-icon">🎯</div>
+                        <div class="risk-title">Maximize</div>
+                        <div class="risk-desc">Aggressively favor top performers, quick to cut losers</div>
+                        <div class="risk-max">Needs 80% confidence to cut</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="backToStep1">Back</button>
+                <button class="btn btn-primary" id="runAnalysis" disabled>Run Optimization</button>
+            </div>
+        </div>
+
+        <!-- Step 3: Results -->
+        <div class="step-content" id="step3">
+            <div class="results-header" id="resultsHeader">
+                <h2>Optimization Results</h2>
+                <div class="path-id" id="resultsPathId"></div>
+            </div>
+
+            <!-- Summary Cards -->
+            <div class="summary-cards" id="summaryCards"></div>
+
+            <!-- Recommendations -->
+            <div class="recommendations" id="recommendations">
+                <h3>Key Recommendations</h3>
+                <ul id="recommendationsList"></ul>
+            </div>
+
+            <!-- Results Table -->
+            <div class="card">
+                <h2>Offer Weights</h2>
+                <div class="results-table-container">
+                    <table class="results-table" id="resultsTable">
+                        <thead>
+                            <tr>
+                                <th data-sort="name">Offer<span class="sort-icon"></span></th>
+                                <th data-sort="yesterdayShare">Yesterday<span class="sort-icon"></span></th>
+                                <th data-sort="suggestedWeight">Suggested<span class="sort-icon"></span></th>
+                                <th data-sort="epv1d">EPV 1d<span class="sort-icon"></span></th>
+                                <th data-sort="conv1d">Conv 1d<span class="sort-icon"></span></th>
+                                <th data-sort="visits1d">Visits 1d<span class="sort-icon"></span></th>
+                                <th data-sort="epv7d">EPV 7d<span class="sort-icon"></span></th>
+                                <th data-sort="conv7d">Conv 7d<span class="sort-icon"></span></th>
+                                <th data-sort="visits7d">Visits 7d<span class="sort-icon"></span></th>
+                                <th data-sort="epv30d">EPV 30d<span class="sort-icon"></span></th>
+                                <th data-sort="conv30d">Conv 30d<span class="sort-icon"></span></th>
+                                <th data-sort="visits30d">Visits 30d<span class="sort-icon"></span></th>
+                                <th data-sort="confidence">Confidence<span class="sort-icon"></span></th>
+                            </tr>
+                        </thead>
+                        <tbody id="resultsBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Charts -->
+            <div class="charts-grid">
+                <div class="chart-container">
+                    <h3>Weight Comparison</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="weightChart"></canvas>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <h3>EPV by Offer</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="epvChart"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="btn-group">
+                <button class="btn btn-secondary" id="backToStep2">Back to Configuration</button>
+                <button class="btn btn-primary" id="exportResults">Export to CSV</button>
+                <button class="btn btn-secondary" id="startOver">Start Over</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loadingOverlay">
+        <div class="spinner"></div>
+        <div class="loading-text" id="loadingText">Processing...</div>
+        <div class="progress-text" id="progressText"></div>
+    </div>
+
+    <script>
+        // Global state
+        let rawData = [];
+        let columnNames = [];
+        let selectedPath = null;
+        let selectedRisk = 'balanced';
+        let analysisResults = null;
+        let pathData = {};
+        let weightChart = null;
+        let epvChart = null;
+        let currentSort = { column: 'suggestedWeight', direction: 'desc' };
+        let pathSort = { column: 'revenue', direction: 'desc' };
+        let pathListData = [];
+        let pathSearchTerm = '';
+
+        // Column mapping
+        const columnConfig = {
+            pathCol: { label: 'Path ID/Name', required: true, keywords: ['path', 'campaign', 'flow'] },
+            offerCol: { label: 'Offer ID/Name', required: true, keywords: ['offer', 'lander'] },
+            dateCol: { label: 'Date', required: true, keywords: ['date', 'time', 'day'] },
+            visitsCol: { label: 'Visits', required: true, keywords: ['visit', 'impression', 'view'] },
+            clicksCol: { label: 'Clicks', required: false, keywords: ['click'] },
+            conversionsCol: { label: 'Conversions', required: true, keywords: ['conv', 'lead', 'conversion', 'cv'] },
+            revenueCol: { label: 'Revenue', required: true, keywords: ['revenue', 'earning', 'payout', 'income'] }
+        };
+
+        // Optimization mode settings - confidence thresholds for statistical significance
+        const modeSettings = {
+            conservative: { confidenceThreshold: 0.95, explorationBonus: 0.3, name: 'Exploration' },
+            balanced: { confidenceThreshold: 0.90, explorationBonus: 0.15, name: 'Optimize' },
+            aggressive: { confidenceThreshold: 0.80, explorationBonus: 0.05, name: 'Maximize' }
+        };
+
+        // DOM Elements
+        const uploadZone = document.getElementById('uploadZone');
+        const fileInput = document.getElementById('fileInput');
+        const dataPreview = document.getElementById('dataPreview');
+        const previewStats = document.getElementById('previewStats');
+        const columnMapping = document.getElementById('columnMapping');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', init);
+
+        function init() {
+            setupFileUpload();
+            setupNavigation();
+            setupRiskSelector();
+        }
+
+        // File Upload
+        function setupFileUpload() {
+            uploadZone.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', handleFileSelect);
+
+            uploadZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadZone.classList.add('dragover');
+            });
+
+            uploadZone.addEventListener('dragleave', () => {
+                uploadZone.classList.remove('dragover');
+            });
+
+            uploadZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadZone.classList.remove('dragover');
+                const file = e.dataTransfer.files[0];
+                if (file && file.name.endsWith('.csv')) {
+                    parseCSV(file);
+                } else {
+                    showError('Please upload a CSV file.');
+                }
+            });
+
+            document.getElementById('resetUpload').addEventListener('click', resetUpload);
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                parseCSV(file);
+            }
+        }
+
+        function parseCSV(file) {
+            showLoading('Parsing CSV file...');
+
+            const reader = new FileReader();
+            reader.onload = async (e) => {
+                try {
+                    const text = e.target.result;
+                    const lines = text.split('\n').filter(line => line.trim());
+
+                    if (lines.length < 2) {
+                        throw new Error('CSV file must have at least a header row and one data row.');
+                    }
+
+                    // Parse header
+                    columnNames = parseCSVLine(lines[0]);
+
+                    // Parse data rows
+                    rawData = [];
+                    for (let i = 1; i < lines.length; i++) {
+                        const values = parseCSVLine(lines[i]);
+                        if (values.length === columnNames.length) {
+                            const row = {};
+                            columnNames.forEach((col, idx) => {
+                                row[col] = values[idx];
+                            });
+                            rawData.push(row);
+                        }
+
+                        if (i % 10000 === 0) {
+                            setProgress(`Parsed ${i.toLocaleString()} rows...`);
+                            await yieldToMain();
+                        }
+                    }
+
+                    hideLoading();
+                    showDataPreview();
+                } catch (error) {
+                    hideLoading();
+                    showError('Error parsing CSV: ' + error.message);
+                }
+            };
+
+            reader.onerror = () => {
+                hideLoading();
+                showError('Error reading file.');
+            };
+
+            reader.readAsText(file);
+        }
+
+        function parseCSVLine(line) {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === ',' && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            result.push(current.trim());
+            return result;
+        }
+
+        function showDataPreview() {
+            uploadZone.classList.add('hidden');
+            dataPreview.classList.remove('hidden');
+
+            // Show stats
+            previewStats.innerHTML = `
+                <div class="preview-stat">
+                    <div class="stat-value">${rawData.length.toLocaleString()}</div>
+                    <div class="stat-label">Rows</div>
+                </div>
+                <div class="preview-stat">
+                    <div class="stat-value">${columnNames.length}</div>
+                    <div class="stat-label">Columns</div>
+                </div>
+            `;
+
+            // Create column mapping dropdowns
+            columnMapping.innerHTML = '';
+            for (const [key, config] of Object.entries(columnConfig)) {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.innerHTML = `
+                    <label>${config.label}${config.required ? ' *' : ''}</label>
+                    <select id="${key}">
+                        <option value="">-- Select Column --</option>
+                        ${columnNames.map(col => `<option value="${col}">${col}</option>`).join('')}
+                    </select>
+                `;
+                columnMapping.appendChild(div);
+
+                // Auto-select based on keywords
+                const select = div.querySelector('select');
+                const lowerColumns = columnNames.map(c => c.toLowerCase());
+                for (const keyword of config.keywords) {
+                    const idx = lowerColumns.findIndex(c => c.includes(keyword));
+                    if (idx !== -1) {
+                        select.value = columnNames[idx];
+                        break;
+                    }
+                }
+
+                select.addEventListener('change', validateColumnMapping);
+            }
+
+            validateColumnMapping();
+        }
+
+        function validateColumnMapping() {
+            const requiredFields = Object.entries(columnConfig)
+                .filter(([key, config]) => config.required)
+                .map(([key]) => key);
+
+            const allMapped = requiredFields.every(key => {
+                const select = document.getElementById(key);
+                return select && select.value;
+            });
+
+            document.getElementById('proceedToStep2').disabled = !allMapped;
+        }
+
+        function resetUpload() {
+            rawData = [];
+            columnNames = [];
+            fileInput.value = '';
+            uploadZone.classList.remove('hidden');
+            dataPreview.classList.add('hidden');
+            hideError();
+        }
+
+        // Navigation
+        function setupNavigation() {
+            document.getElementById('proceedToStep2').addEventListener('click', () => {
+                buildPathList();
+                goToStep(2);
+            });
+
+            document.getElementById('backToStep1').addEventListener('click', () => {
+                pathSearchTerm = '';
+                goToStep(1);
+            });
+            document.getElementById('backToStep2').addEventListener('click', () => goToStep(2));
+            document.getElementById('runAnalysis').addEventListener('click', runAnalysis);
+            document.getElementById('exportResults').addEventListener('click', exportResults);
+            document.getElementById('startOver').addEventListener('click', () => {
+                resetUpload();
+                selectedPath = null;
+                selectedRisk = 'balanced';
+                pathListData = [];
+                pathSearchTerm = '';
+                goToStep(1);
+            });
+        }
+
+        function goToStep(step) {
+            // Update step indicators
+            document.querySelectorAll('.step').forEach((el, idx) => {
+                el.classList.remove('active', 'completed');
+                if (idx + 1 < step) el.classList.add('completed');
+                if (idx + 1 === step) el.classList.add('active');
+            });
+
+            // Show/hide content
+            document.querySelectorAll('.step-content').forEach((el, idx) => {
+                el.classList.toggle('active', idx + 1 === step);
+            });
+        }
+
+        // Path List
+        function buildPathList() {
+            showLoading('Analyzing paths...');
+
+            const pathCol = document.getElementById('pathCol').value;
+            const visitsCol = document.getElementById('visitsCol').value;
+            const revenueCol = document.getElementById('revenueCol').value;
+            const conversionsCol = document.getElementById('conversionsCol').value;
+            const offerCol = document.getElementById('offerCol').value;
+
+            // Aggregate by path
+            pathData = {};
+            rawData.forEach(row => {
+                const path = row[pathCol];
+                if (!pathData[path]) {
+                    pathData[path] = { name: path, visits: 0, revenue: 0, conversions: 0, offers: new Set() };
+                }
+                pathData[path].visits += parseFloat(row[visitsCol]) || 0;
+                pathData[path].revenue += parseFloat(row[revenueCol]) || 0;
+                pathData[path].conversions += parseFloat(row[conversionsCol]) || 0;
+                pathData[path].offers.add(row[offerCol]);
+            });
+
+            // Convert to array with EPV calculated
+            pathListData = Object.values(pathData).map(p => ({
+                ...p,
+                offers: p.offers.size,
+                epv: p.visits > 0 ? p.revenue / p.visits : 0
+            }));
+
+            // Render and setup
+            renderPathList();
+            setupPathSorting();
+            setupPathSearch();
+
+            hideLoading();
+        }
+
+        function renderPathList() {
+            const tbody = document.getElementById('pathPreviewBody');
+
+            // Filter by search term
+            let filtered = pathListData;
+            if (pathSearchTerm) {
+                const term = pathSearchTerm.toLowerCase();
+                filtered = pathListData.filter(p => p.name.toLowerCase().includes(term));
+            }
+
+            // Sort
+            const sorted = [...filtered].sort((a, b) => {
+                let aVal = a[pathSort.column];
+                let bVal = b[pathSort.column];
+                if (typeof aVal === 'string') {
+                    return pathSort.direction === 'asc'
+                        ? aVal.localeCompare(bVal)
+                        : bVal.localeCompare(aVal);
+                }
+                return pathSort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+
+            tbody.innerHTML = sorted.map(p => `
+                <tr class="path-row ${selectedPath === p.name ? 'selected' : ''}" data-path="${p.name}">
+                    <td>${p.name}</td>
+                    <td class="number">$${p.revenue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+                    <td class="number">${p.conversions.toLocaleString()}</td>
+                    <td class="number">${p.visits.toLocaleString()}</td>
+                    <td class="number">$${p.epv.toFixed(4)}</td>
+                    <td class="number">${p.offers}</td>
+                </tr>
+            `).join('');
+
+            // Add click handlers to rows
+            document.querySelectorAll('.path-row').forEach(row => {
+                row.addEventListener('click', () => {
+                    document.querySelectorAll('.path-row').forEach(r => r.classList.remove('selected'));
+                    row.classList.add('selected');
+                    selectedPath = row.dataset.path;
+                    document.getElementById('runAnalysis').disabled = false;
+                });
+            });
+
+            // Update sort indicators
+            document.querySelectorAll('#pathPreviewTable th[data-pathsort]').forEach(th => {
+                th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
+                if (th.dataset.sort === pathSort.column) {
+                    th.classList.add('sorted', `sorted-${pathSort.direction}`);
+                }
+            });
+        }
+
+        function setupPathSorting() {
+            document.querySelectorAll('#pathPreviewTable th[data-pathsort]').forEach(th => {
+                // Remove old listeners by cloning
+                const newTh = th.cloneNode(true);
+                th.parentNode.replaceChild(newTh, th);
+
+                newTh.addEventListener('click', () => {
+                    const column = newTh.dataset.sort;
+                    if (pathSort.column === column) {
+                        pathSort.direction = pathSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        pathSort.column = column;
+                        pathSort.direction = 'desc';
+                    }
+                    renderPathList();
+                });
+            });
+        }
+
+        function setupPathSearch() {
+            const searchInput = document.getElementById('pathSearch');
+            // Remove old listeners
+            const newInput = searchInput.cloneNode(true);
+            searchInput.parentNode.replaceChild(newInput, searchInput);
+
+            newInput.addEventListener('input', (e) => {
+                pathSearchTerm = e.target.value;
+                renderPathList();
+            });
+        }
+
+        // Risk Selector
+        function setupRiskSelector() {
+            document.querySelectorAll('.risk-option').forEach(el => {
+                el.addEventListener('click', () => {
+                    document.querySelectorAll('.risk-option').forEach(o => o.classList.remove('selected'));
+                    el.classList.add('selected');
+                    selectedRisk = el.dataset.risk;
+                });
+            });
+        }
+
+        // Analysis
+        async function runAnalysis() {
+            showLoading('Running optimization analysis...');
+            hideError();
+
+            try {
+                const pathCol = document.getElementById('pathCol').value;
+                const offerCol = document.getElementById('offerCol').value;
+                const dateCol = document.getElementById('dateCol').value;
+                const visitsCol = document.getElementById('visitsCol').value;
+                const clicksCol = document.getElementById('clicksCol').value;
+                const conversionsCol = document.getElementById('conversionsCol').value;
+                const revenueCol = document.getElementById('revenueCol').value;
+
+                // Filter data for selected path
+                setProgress('Filtering data for selected path...');
+                await yieldToMain();
+
+                const pathRows = rawData.filter(row => row[pathCol] === selectedPath);
+
+                if (pathRows.length === 0) {
+                    throw new Error('No data found for selected path.');
+                }
+
+                // Group by offer and date
+                setProgress('Grouping data by offer and date...');
+                await yieldToMain();
+
+                const offerData = {};
+                const allDates = new Set();
+
+                pathRows.forEach(row => {
+                    const offer = row[offerCol];
+                    const date = row[dateCol];
+                    allDates.add(date);
+
+                    if (!offerData[offer]) {
+                        offerData[offer] = {
+                            name: offer,
+                            totalVisits: 0,
+                            totalClicks: 0,
+                            totalConversions: 0,
+                            totalRevenue: 0,
+                            dailyData: {}
+                        };
+                    }
+
+                    const visits = parseFloat(row[visitsCol]) || 0;
+                    const clicks = parseFloat(row[clicksCol]) || 0;
+                    const conversions = parseFloat(row[conversionsCol]) || 0;
+                    const revenue = parseFloat(row[revenueCol]) || 0;
+
+                    offerData[offer].totalVisits += visits;
+                    offerData[offer].totalClicks += clicks;
+                    offerData[offer].totalConversions += conversions;
+                    offerData[offer].totalRevenue += revenue;
+
+                    if (!offerData[offer].dailyData[date]) {
+                        offerData[offer].dailyData[date] = { visits: 0, clicks: 0, conversions: 0, revenue: 0 };
+                    }
+                    offerData[offer].dailyData[date].visits += visits;
+                    offerData[offer].dailyData[date].clicks += clicks;
+                    offerData[offer].dailyData[date].conversions += conversions;
+                    offerData[offer].dailyData[date].revenue += revenue;
+                });
+
+                // Sort dates
+                const sortedDates = Array.from(allDates).sort();
+                const yesterday = sortedDates[sortedDates.length - 1];
+
+                // Calculate total visits for yesterday (for share calculation)
+                let totalYesterdayVisits = 0;
+                Object.values(offerData).forEach(offer => {
+                    if (offer.dailyData[yesterday]) {
+                        totalYesterdayVisits += offer.dailyData[yesterday].visits;
+                    }
+                });
+
+                // Analyze each offer
+                setProgress('Analyzing offer stability and performance...');
+                await yieldToMain();
+
+                const offers = [];
+                for (const [offerName, data] of Object.entries(offerData)) {
+                    const analysis = analyzeOffer(data, sortedDates, yesterday, totalYesterdayVisits);
+                    offers.push(analysis);
+                }
+
+                // Calculate optimal weights
+                setProgress('Calculating optimal weights...');
+                await yieldToMain();
+
+                const optimizedOffers = calculateOptimalWeights(offers, modeSettings[selectedRisk]);
+
+                // Calculate path totals
+                const totalVisits = offers.reduce((sum, o) => sum + o.totalVisits, 0);
+                const totalClicks = offers.reduce((sum, o) => sum + o.totalClicks, 0);
+                const totalConversions = offers.reduce((sum, o) => sum + o.totalConversions, 0);
+                const totalRevenue = offers.reduce((sum, o) => sum + o.totalRevenue, 0);
+                const currentEPV = totalVisits > 0 ? totalRevenue / totalVisits : 0;
+
+                // Calculate expected EPV with new weights
+                let expectedEPV = 0;
+                optimizedOffers.forEach(offer => {
+                    const offerEPV = offer.effectiveEPV || offer.epv7d || offer.epv30d || 0;
+                    expectedEPV += offerEPV * offer.suggestedWeight;
+                });
+
+                analysisResults = {
+                    path: selectedPath,
+                    offers: optimizedOffers,
+                    totals: { visits: totalVisits, clicks: totalClicks, conversions: totalConversions, revenue: totalRevenue },
+                    currentEPV,
+                    expectedEPV,
+                    improvement: currentEPV > 0 ? ((expectedEPV - currentEPV) / currentEPV) * 100 : 0,
+                    riskLevel: selectedRisk
+                };
+
+                hideLoading();
+                displayResults();
+                goToStep(3);
+
+            } catch (error) {
+                hideLoading();
+                showError('Analysis failed: ' + error.message);
+            }
+        }
+
+        function analyzeOffer(data, sortedDates, yesterday, totalYesterdayVisits) {
+            // Calculate period-specific stats
+            const last1d = sortedDates.slice(-1);
+            const last7d = sortedDates.slice(-7);
+            const last30d = sortedDates.slice(-30);
+
+            // Helper to sum stats for a period
+            const sumPeriod = (dates) => {
+                let visits = 0, clicks = 0, conversions = 0, revenue = 0;
+                dates.forEach(date => {
+                    const dayData = data.dailyData[date];
+                    if (dayData) {
+                        visits += dayData.visits;
+                        clicks += dayData.clicks;
+                        conversions += dayData.conversions;
+                        revenue += dayData.revenue;
+                    }
+                });
+                return { visits, clicks, conversions, revenue, epv: visits > 0 ? revenue / visits : 0 };
+            };
+
+            const stats1d = sumPeriod(last1d);
+            const stats7d = sumPeriod(last7d);
+            const stats30d = sumPeriod(last30d);
+
+            // Calculate yesterday's share
+            const yesterdayVisits = data.dailyData[yesterday]?.visits || 0;
+            const yesterdayShare = totalYesterdayVisits > 0 ? yesterdayVisits / totalYesterdayVisits : 0;
+
+            // Check if offer is paused (0 visits yesterday)
+            const isPaused = yesterdayVisits === 0;
+
+            // Calculate daily EPVs for variance analysis
+            const dailyEPVs = [];
+            sortedDates.forEach(date => {
+                const dayData = data.dailyData[date];
+                if (dayData && dayData.visits > 0) {
+                    dailyEPVs.push({
+                        date,
+                        epv: dayData.revenue / dayData.visits,
+                        visits: dayData.visits,
+                        conversions: dayData.conversions
+                    });
+                }
+            });
+
+            return {
+                name: data.name,
+                totalVisits: data.totalVisits,
+                totalClicks: data.totalClicks,
+                totalConversions: data.totalConversions,
+                totalRevenue: data.totalRevenue,
+                // Period stats
+                visits1d: stats1d.visits,
+                visits7d: stats7d.visits,
+                visits30d: stats30d.visits,
+                conv1d: stats1d.conversions,
+                conv7d: stats7d.conversions,
+                conv30d: stats30d.conversions,
+                revenue1d: stats1d.revenue,
+                revenue7d: stats7d.revenue,
+                revenue30d: stats30d.revenue,
+                epv1d: stats1d.epv,
+                epv7d: stats7d.epv,
+                epv30d: stats30d.epv,
+                yesterdayShare,
+                isPaused,
+                dailyEPVs
+            };
+        }
+
+        function calculateOptimalWeights(offers, settings) {
+            /*
+             * Google Ads-style optimization algorithm:
+             * 1. Calculate EPV with confidence intervals for each offer
+             * 2. Use statistical tests to determine if offers are significantly better/worse
+             * 3. Allocate weight proportional to expected EPV, boosting confident winners
+             * 4. Cut losers to 0% if we're confident they underperform
+             * 5. Keep some exploration weight for uncertain offers
+             */
+
+            const activeOffers = offers.filter(o => !o.isPaused);
+
+            // Calculate dynamic minimum visits based on path traffic and risk tolerance
+            // Use the TOP performer's traffic as benchmark (not average, which gets skewed)
+            const maxVisits7d = Math.max(...activeOffers.map(o => o.visits7d || 0));
+            const maxVisits30d = Math.max(...activeOffers.map(o => o.visits30d || 0));
+
+            // Risk tolerance multipliers - what % of top performer's traffic do you need?
+            // - Exploration (conservative): 3% of top = low bar, keep testing longer
+            // - Optimize (balanced): 10% of top = moderate bar
+            // - Maximize (aggressive): 20% of top = high bar, need significant traffic to trust
+            const riskMultiplier = {
+                0.95: 0.03,  // Exploration - accept less data
+                0.90: 0.10,  // Optimize - moderate
+                0.80: 0.20   // Maximize - need more confidence
+            }[settings.confidenceThreshold] || 0.10;
+
+            // Minimum visits = percentage of what top performer got
+            // Floor at 100 visits (need some data), cap at 2000 visits
+            const minVisitsRequired = Math.min(2000, Math.max(100,
+                Math.max(maxVisits7d, maxVisits30d / 4) * riskMultiplier
+            ));
+
+            console.log('Min visits required:', minVisitsRequired, 'Max 7d:', maxVisits7d, 'Multiplier:', riskMultiplier);
+
+            if (activeOffers.length === 0) {
+                offers.forEach(o => {
+                    o.suggestedWeight = 0;
+                    o.confidence = 0;
+                    o.status = 'paused';
+                });
+                return offers;
+            }
+
+            // Step 1: Calculate confidence intervals for each offer's EPV
+            activeOffers.forEach(offer => {
+                // Use 7d data primarily, fall back to 30d for low volume
+                const primaryConv = offer.conv7d || 0;
+                const primaryVisits = offer.visits7d || 0;
+                const primaryEPV = offer.epv7d || 0;
+
+                const fallbackConv = offer.conv30d || 0;
+                const fallbackVisits = offer.visits30d || 0;
+                const fallbackEPV = offer.epv30d || 0;
+
+                // Determine which data to use based on sample size
+                // Minimum visits is dynamic based on path traffic and risk tolerance
+                let conv, visits, epv, dataAge;
+                if (primaryVisits >= minVisitsRequired) {
+                    conv = primaryConv;
+                    visits = primaryVisits;
+                    epv = primaryEPV;
+                    dataAge = '7d';
+                } else if (fallbackVisits >= minVisitsRequired) {
+                    conv = fallbackConv;
+                    visits = fallbackVisits;
+                    epv = fallbackEPV;
+                    dataAge = '30d';
+                } else {
+                    conv = fallbackConv || 1;
+                    visits = fallbackVisits || 1;
+                    epv = fallbackEPV || 0;
+                    dataAge = 'insufficient';
+                }
+
+                offer.effectiveEPV = epv || 0;
+                offer.effectiveConv = conv || 0;
+                offer.dataAge = dataAge;
+
+                // Calculate standard error for EPV
+                // Using conversion rate variance as proxy for EPV variance
+                const convRate = visits > 0 ? conv / visits : 0;
+                const variance = convRate * (1 - convRate);
+                const stdError = visits > 0 ? Math.sqrt(variance / visits) : 1;
+
+                // Revenue per conversion variance (from daily data)
+                const revenue = dataAge === '7d' ? (offer.revenue7d || 0) : (offer.revenue30d || 0);
+                let revenuePerConv = conv > 0 ? revenue / conv : 0;
+
+                // Calculate EPV confidence interval (using normal approximation)
+                // Width of CI depends on sample size
+                const zScore = settings.confidenceThreshold === 0.95 ? 1.96 :
+                               settings.confidenceThreshold === 0.90 ? 1.645 : 1.28;
+
+                const epvStdError = epv > 0 ? epv * (stdError / Math.max(0.01, convRate)) : 0;
+                offer.epvLower = Math.max(0, (epv || 0) - zScore * epvStdError);
+                offer.epvUpper = (epv || 0) + zScore * epvStdError;
+
+                // Confidence score: how tight is our estimate? (0-100)
+                // More conversions = tighter interval = higher confidence
+                offer.confidence = Math.min(100, Math.round((conv / 100) * 100));
+            });
+
+            // Step 2: Find the best performer(s) and calculate relative performance
+            const bestEPV = Math.max(...activeOffers.map(o => o.effectiveEPV));
+            const avgEPV = activeOffers.reduce((sum, o) => sum + o.effectiveEPV, 0) / activeOffers.length;
+
+            activeOffers.forEach(offer => {
+                // Is this offer significantly worse than the best?
+                // If the upper bound of this offer's EPV is below the lower bound of the best, it's a loser
+                const bestOffer = activeOffers.find(o => o.effectiveEPV === bestEPV);
+
+                offer.vsBest = bestEPV > 0 ? (offer.effectiveEPV / bestEPV) : 1;
+                offer.vsAvg = avgEPV > 0 ? (offer.effectiveEPV / avgEPV) : 1;
+
+                // Determine if significantly worse
+                offer.significantlyWorse = offer.epvUpper < bestOffer.epvLower && offer.confidence >= 50;
+
+                // Determine if significantly better
+                offer.significantlyBetter = offer.epvLower > avgEPV && offer.confidence >= 50;
+            });
+
+            // Step 3: Calculate raw scores using Thompson Sampling-inspired approach
+            // Better performers get exponentially more weight
+            // Low confidence offers get heavily penalized
+            activeOffers.forEach(offer => {
+                // Confidence factor: 0-100 scaled to 0.1-1.0
+                // Low confidence = much lower score
+                const confidenceFactor = 0.1 + (offer.confidence / 100) * 0.9;
+
+                if (offer.significantlyWorse && offer.confidence >= 70) {
+                    // Confident loser - suggest cutting or minimal weight
+                    offer.score = 0;
+                    offer.status = 'cut';
+                } else if (offer.dataAge === 'insufficient') {
+                    // Not enough data - give small exploration weight
+                    // Don't give high weight just because EPV looks good on tiny sample
+                    offer.score = avgEPV * settings.explorationBonus * 0.5;
+                    offer.status = 'exploring';
+                } else if (offer.significantlyBetter && offer.confidence >= 50) {
+                    // Confident winner - boost significantly
+                    // Use exponential scaling to favor winners
+                    offer.score = Math.pow(offer.effectiveEPV, 1.5) * confidenceFactor;
+                    offer.status = 'winner';
+                } else {
+                    // Uncertain - weight by EPV but penalize by confidence
+                    // Low confidence = much lower weight even if EPV looks good
+                    offer.score = offer.effectiveEPV * confidenceFactor * confidenceFactor;
+                    offer.status = 'testing';
+                }
+            });
+
+            // Step 4: Calculate weights with performance-weighted distribution within buckets
+            // Group offers by status
+            const buckets = {
+                winner: activeOffers.filter(o => o.status === 'winner'),
+                testing: activeOffers.filter(o => o.status === 'testing'),
+                exploring: activeOffers.filter(o => o.status === 'exploring'),
+                cut: activeOffers.filter(o => o.status === 'cut')
+            };
+
+            // Determine bucket allocation based on what we have
+            // Winners get the lion's share, then testing, then exploring, cut gets 0
+            const totalScore = activeOffers.reduce((sum, o) => sum + o.score, 0);
+
+            if (totalScore > 0) {
+                // First pass: calculate raw weights from scores
+                activeOffers.forEach(offer => {
+                    offer.suggestedWeight = offer.score / totalScore;
+                });
+
+                // Second pass: within each bucket, distribute based on performance (EPV * confidence)
+                // This adds slight optimization within buckets while maintaining bucket proportions
+                Object.entries(buckets).forEach(([status, offers]) => {
+                    if (offers.length <= 1 || status === 'cut') return;
+
+                    const bucketTotalWeight = offers.reduce((sum, o) => sum + o.suggestedWeight, 0);
+                    if (bucketTotalWeight <= 0) return;
+
+                    // Calculate performance score within bucket
+                    const perfScores = offers.map(o => {
+                        const conf = (o.confidence || 1) / 100;
+                        const epv = o.effectiveEPV || o.epv7d || o.epv30d || 0;
+                        return { offer: o, perf: epv * (0.5 + conf * 0.5) }; // EPV weighted by confidence
+                    });
+                    const totalPerf = perfScores.reduce((sum, p) => sum + p.perf, 0);
+
+                    if (totalPerf > 0) {
+                        // Redistribute bucket weight based on performance
+                        // Use 70% performance-based, 30% equal split to avoid extremes
+                        const equalShare = bucketTotalWeight / offers.length;
+                        perfScores.forEach(({ offer, perf }) => {
+                            const perfShare = (perf / totalPerf) * bucketTotalWeight;
+                            offer.suggestedWeight = perfShare * 0.7 + equalShare * 0.3;
+                        });
+                    }
+                });
+            } else {
+                activeOffers.forEach(offer => {
+                    offer.suggestedWeight = 1 / activeOffers.length;
+                });
+            }
+
+            // Step 5: Apply minimum exploration weight for non-cut offers
+            // Ensure we don't completely kill offers we're still learning about
+            const minExplorationWeight = 0.02; // 2% minimum to keep data flowing
+            let needsRebalance = false;
+
+            activeOffers.forEach(offer => {
+                if (offer.status !== 'cut' && offer.suggestedWeight < minExplorationWeight) {
+                    offer.suggestedWeight = minExplorationWeight;
+                    needsRebalance = true;
+                }
+            });
+
+            // Rebalance if we added minimum weights
+            if (needsRebalance) {
+                const totalWeight = activeOffers.reduce((sum, o) => sum + o.suggestedWeight, 0);
+                activeOffers.forEach(offer => {
+                    offer.suggestedWeight = offer.suggestedWeight / totalWeight;
+                });
+            }
+
+            // Mark paused offers
+            offers.filter(o => o.isPaused).forEach(offer => {
+                offer.suggestedWeight = 0;
+                offer.confidence = 0;
+                offer.status = 'paused';
+                offer.effectiveEPV = 0;
+            });
+
+            // Sort by suggested weight descending
+            offers.sort((a, b) => b.suggestedWeight - a.suggestedWeight);
+
+            return offers;
+        }
+
+        function displayResults() {
+            const { path, offers, totals, currentEPV, expectedEPV, improvement, riskLevel } = analysisResults;
+
+            // Header
+            document.getElementById('resultsPathId').textContent = `Path: ${path}`;
+
+            // Count active and paused offers
+            const activeCount = offers.filter(o => !o.isPaused).length;
+            const pausedCount = offers.filter(o => o.isPaused).length;
+
+            // Summary cards
+            document.getElementById('summaryCards').innerHTML = `
+                <div class="summary-card neutral">
+                    <div class="value">$${(currentEPV || 0).toFixed(4)}</div>
+                    <div class="label">Current EPV</div>
+                </div>
+                <div class="summary-card ${(improvement || 0) > 0 ? 'positive' : 'neutral'}">
+                    <div class="value">$${(expectedEPV || 0).toFixed(4)}</div>
+                    <div class="label">Expected EPV</div>
+                </div>
+                <div class="summary-card ${(improvement || 0) > 0 ? 'positive' : 'neutral'}">
+                    <div class="value">${(improvement || 0) > 0 ? '+' : ''}${(improvement || 0).toFixed(2)}%</div>
+                    <div class="label">Improvement</div>
+                </div>
+                <div class="summary-card neutral">
+                    <div class="value">${activeCount}/${offers.length}</div>
+                    <div class="label">Active Offers</div>
+                </div>
+                <div class="summary-card neutral">
+                    <div class="value">${riskLevel.charAt(0).toUpperCase() + riskLevel.slice(1)}</div>
+                    <div class="label">Risk Level</div>
+                </div>
+            `;
+
+            // Recommendations
+            const recommendations = generateRecommendations(offers);
+            document.getElementById('recommendationsList').innerHTML = recommendations
+                .map(rec => `<li>${rec}</li>`).join('');
+
+            // Render table
+            renderResultsTable();
+
+            // Setup sorting
+            setupTableSorting();
+
+            // Charts
+            renderCharts(offers.filter(o => !o.isPaused));
+        }
+
+        function renderResultsTable() {
+            const { offers } = analysisResults;
+            const tbody = document.getElementById('resultsBody');
+            tbody.innerHTML = '';
+
+            // Sort offers
+            const sortedOffers = [...offers].sort((a, b) => {
+                let aVal = a[currentSort.column];
+                let bVal = b[currentSort.column];
+
+                // Handle undefined
+                if (aVal === undefined) aVal = 0;
+                if (bVal === undefined) bVal = 0;
+
+                // Handle string comparison
+                if (typeof aVal === 'string') {
+                    return currentSort.direction === 'asc'
+                        ? aVal.localeCompare(bVal)
+                        : bVal.localeCompare(aVal);
+                }
+
+                // Handle numeric comparison
+                return currentSort.direction === 'asc' ? aVal - bVal : bVal - aVal;
+            });
+
+            sortedOffers.forEach(offer => {
+                const weightChange = (offer.suggestedWeight || 0) - (offer.yesterdayShare || 0);
+                let arrow = '→';
+                let arrowClass = 'same';
+                if (weightChange > 0.02) { arrow = '↑'; arrowClass = 'up'; }
+                else if (weightChange < -0.02) { arrow = '↓'; arrowClass = 'down'; }
+
+                // Status badge
+                let statusBadge = '';
+                if (offer.isPaused) {
+                    statusBadge = '<span class="status-badge status-paused">PAUSED</span>';
+                } else if (offer.status === 'winner') {
+                    statusBadge = '<span class="status-badge status-winner">WINNER</span>';
+                } else if (offer.status === 'cut') {
+                    statusBadge = '<span class="status-badge status-cut">CUT</span>';
+                } else if (offer.status === 'exploring') {
+                    statusBadge = '<span class="status-badge status-exploring">EXPLORING</span>';
+                } else if (offer.status === 'testing') {
+                    statusBadge = '<span class="status-badge status-testing">TESTING</span>';
+                }
+
+                // Confidence badge color
+                const confClass = offer.confidence >= 70 ? 'high' : offer.confidence >= 40 ? 'medium' : 'low';
+
+                const row = document.createElement('tr');
+                if (offer.isPaused || offer.status === 'cut') {
+                    row.style.opacity = '0.5';
+                }
+
+                row.innerHTML = `
+                    <td>
+                        <strong>${offer.name}</strong>
+                        ${statusBadge}
+                    </td>
+                    <td class="number">${((offer.yesterdayShare || 0) * 100).toFixed(1)}%</td>
+                    <td class="number">
+                        <div class="weight-change">
+                            <strong>${((offer.suggestedWeight || 0) * 100).toFixed(1)}%</strong>
+                            <span class="weight-arrow ${arrowClass}">${arrow}</span>
+                        </div>
+                    </td>
+                    <td class="number">$${(offer.epv1d || 0).toFixed(4)}</td>
+                    <td class="number">${(offer.conv1d || 0).toLocaleString()}</td>
+                    <td class="number">${(offer.visits1d || 0).toLocaleString()}</td>
+                    <td class="number">$${(offer.epv7d || 0).toFixed(4)}</td>
+                    <td class="number">${(offer.conv7d || 0).toLocaleString()}</td>
+                    <td class="number">${(offer.visits7d || 0).toLocaleString()}</td>
+                    <td class="number">$${(offer.epv30d || 0).toFixed(4)}</td>
+                    <td class="number">${(offer.conv30d || 0).toLocaleString()}</td>
+                    <td class="number">${(offer.visits30d || 0).toLocaleString()}</td>
+                    <td><span class="stability-badge stability-${confClass}">${offer.confidence || 0}%</span></td>
+                `;
+                tbody.appendChild(row);
+            });
+
+            // Update sort indicators
+            document.querySelectorAll('.results-table th').forEach(th => {
+                th.classList.remove('sorted', 'sorted-asc', 'sorted-desc');
+                if (th.dataset.sort === currentSort.column) {
+                    th.classList.add('sorted', `sorted-${currentSort.direction}`);
+                }
+            });
+        }
+
+        function setupTableSorting() {
+            document.querySelectorAll('.results-table th[data-sort]').forEach(th => {
+                th.addEventListener('click', () => {
+                    const column = th.dataset.sort;
+                    if (currentSort.column === column) {
+                        currentSort.direction = currentSort.direction === 'asc' ? 'desc' : 'asc';
+                    } else {
+                        currentSort.column = column;
+                        currentSort.direction = 'desc';
+                    }
+                    renderResultsTable();
+                });
+            });
+        }
+
+        function generateRecommendations(offers) {
+            const recommendations = [];
+            const activeOffers = offers.filter(o => !o.isPaused);
+
+            // Report winners
+            const winners = activeOffers.filter(o => o.status === 'winner');
+            if (winners.length > 0) {
+                const topWinner = winners[0];
+                const winnerEPV = topWinner.effectiveEPV || topWinner.epv7d || 0;
+                recommendations.push(`🏆 "${topWinner.name}" is a confident winner - boosting to ${((topWinner.suggestedWeight || 0) * 100).toFixed(1)}% (EPV: $${winnerEPV.toFixed(4)})`);
+            }
+
+            // Report offers to cut
+            const toCut = activeOffers.filter(o => o.status === 'cut');
+            if (toCut.length > 0) {
+                recommendations.push(`🛑 Suggest cutting ${toCut.length} offer(s): ${toCut.map(o => o.name).join(', ')} (significantly underperforming)`);
+            }
+
+            // Report paused offers
+            const pausedOffers = offers.filter(o => o.isPaused);
+            if (pausedOffers.length > 0) {
+                recommendations.push(`⏸️ ${pausedOffers.length} offer(s) paused (0% traffic yesterday)`);
+            }
+
+            // Report offers still being tested
+            const exploring = activeOffers.filter(o => o.status === 'exploring');
+            if (exploring.length > 0) {
+                recommendations.push(`🔬 ${exploring.length} offer(s) need more data: ${exploring.map(o => o.name).slice(0, 3).join(', ')}${exploring.length > 3 ? '...' : ''}`);
+            }
+
+            // Find biggest weight changes
+            const bigIncreases = activeOffers
+                .filter(o => (o.suggestedWeight || 0) > (o.yesterdayShare || 0) + 0.05)
+                .sort((a, b) => ((b.suggestedWeight || 0) - (b.yesterdayShare || 0)) - ((a.suggestedWeight || 0) - (a.yesterdayShare || 0)));
+
+            if (bigIncreases.length > 0 && bigIncreases[0].status !== 'winner') {
+                const top = bigIncreases[0];
+                recommendations.push(`↑ Increase "${top.name}" from ${((top.yesterdayShare || 0) * 100).toFixed(1)}% to ${((top.suggestedWeight || 0) * 100).toFixed(1)}%`);
+            }
+
+            const bigDecreases = activeOffers
+                .filter(o => (o.suggestedWeight || 0) < (o.yesterdayShare || 0) - 0.05 && o.status !== 'cut')
+                .sort((a, b) => ((a.suggestedWeight || 0) - (a.yesterdayShare || 0)) - ((b.suggestedWeight || 0) - (b.yesterdayShare || 0)));
+
+            if (bigDecreases.length > 0) {
+                const top = bigDecreases[0];
+                recommendations.push(`↓ Decrease "${top.name}" from ${((top.yesterdayShare || 0) * 100).toFixed(1)}% to ${((top.suggestedWeight || 0) * 100).toFixed(1)}%`);
+            }
+
+            if (recommendations.length === 0) {
+                recommendations.push('✓ Current weight distribution is close to optimal');
+            }
+
+            return recommendations;
+        }
+
+        function renderCharts(offers) {
+            const labels = offers.map(o => o.name.length > 15 ? o.name.substring(0, 15) + '...' : o.name);
+            const yesterdayWeights = offers.map(o => ((o.yesterdayShare || 0) * 100).toFixed(1));
+            const suggestedWeights = offers.map(o => ((o.suggestedWeight || 0) * 100).toFixed(1));
+            const epvValues = offers.map(o => (o.effectiveEPV || o.epv7d || 0).toFixed(4));
+
+            // Destroy existing charts
+            if (weightChart) weightChart.destroy();
+            if (epvChart) epvChart.destroy();
+
+            // Weight comparison chart
+            const weightCtx = document.getElementById('weightChart').getContext('2d');
+            weightChart = new Chart(weightCtx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: 'Yesterday',
+                            data: yesterdayWeights,
+                            backgroundColor: 'rgba(136, 136, 136, 0.6)',
+                            borderColor: 'rgba(136, 136, 136, 1)',
+                            borderWidth: 1
+                        },
+                        {
+                            label: 'Suggested',
+                            data: suggestedWeights,
+                            backgroundColor: 'rgba(0, 212, 255, 0.6)',
+                            borderColor: 'rgba(0, 212, 255, 1)',
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            labels: { color: '#ccc' }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            ticks: { color: '#888', callback: v => v + '%' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
+                }
+            });
+
+            // EPV chart
+            const epvCtx = document.getElementById('epvChart').getContext('2d');
+            const stabilityColors = offers.map(o => {
+                const conf = o.confidence || 0;
+                if (conf >= 70) return 'rgba(46, 204, 113, 0.6)';
+                if (conf >= 40) return 'rgba(243, 156, 18, 0.6)';
+                return 'rgba(231, 76, 60, 0.6)';
+            });
+
+            epvChart = new Chart(epvCtx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'EPV',
+                        data: epvValues,
+                        backgroundColor: stabilityColors,
+                        borderColor: stabilityColors.map(c => c.replace('0.6', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `EPV: $${ctx.raw}`
+                            }
+                        }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: '#888' },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        },
+                        y: {
+                            ticks: { color: '#888', callback: v => '$' + v },
+                            grid: { color: 'rgba(255,255,255,0.05)' }
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportResults() {
+            if (!analysisResults) return;
+
+            const { path, offers, currentEPV, expectedEPV, improvement, riskLevel } = analysisResults;
+
+            let csv = `Path,${path}\n`;
+            csv += `Optimization Mode,${modeSettings[riskLevel].name}\n`;
+            csv += `Current EPV,$${(currentEPV || 0).toFixed(4)}\n`;
+            csv += `Expected EPV,$${(expectedEPV || 0).toFixed(4)}\n`;
+            csv += `Improvement,${(improvement || 0).toFixed(2)}%\n\n`;
+
+            csv += 'Offer,Yesterday %,Suggested %,EPV 1d,Conv 1d,Visits 1d,EPV 7d,Conv 7d,Visits 7d,EPV 30d,Conv 30d,Visits 30d,Confidence,Status\n';
+
+            offers.forEach(offer => {
+                const status = offer.isPaused ? 'PAUSED' : (offer.status || 'active').toUpperCase();
+                csv += `"${offer.name}",${((offer.yesterdayShare || 0) * 100).toFixed(1)}%,${((offer.suggestedWeight || 0) * 100).toFixed(1)}%,${(offer.epv1d || 0).toFixed(4)},${offer.conv1d || 0},${offer.visits1d || 0},${(offer.epv7d || 0).toFixed(4)},${offer.conv7d || 0},${offer.visits7d || 0},${(offer.epv30d || 0).toFixed(4)},${offer.conv30d || 0},${offer.visits30d || 0},${offer.confidence || 0}%,${status}\n`;
+            });
+
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `offer_optimization_${path.replace(/[^a-z0-9]/gi, '_')}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Utility functions
+        function showLoading(text) {
+            document.getElementById('loadingText').textContent = text;
+            document.getElementById('progressText').textContent = '';
+            loadingOverlay.classList.remove('hidden');
+        }
+
+        function hideLoading() {
+            loadingOverlay.classList.add('hidden');
+        }
+
+        function setProgress(text) {
+            document.getElementById('progressText').textContent = text;
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.classList.remove('hidden');
+        }
+
+        function hideError() {
+            errorMessage.classList.add('hidden');
+        }
+
+        function yieldToMain() {
+            return new Promise(resolve => setTimeout(resolve, 0));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,11 @@
+# Data files
+*.csv
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
